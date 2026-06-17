@@ -3,13 +3,27 @@ import { createHmac, timingSafeEqual } from "crypto";
 export const SESSION_COOKIE_NAME = "bayu_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 8; // 8 hours
 
-export interface SessionPayload {
+export interface LibrarianSession {
+  role: "LIBRARIAN";
   librarianId: string;
   staffId: string;
   fullName: string;
   position: string;
   exp: number;
 }
+
+export interface MemberSession {
+  role: "MEMBER";
+  memberId: string;
+  personId: string;
+  fullName: string;
+  email: string;
+  exp: number;
+}
+
+export type SessionPayload = LibrarianSession | MemberSession;
+
+type SessionInput = Omit<LibrarianSession, "exp"> | Omit<MemberSession, "exp">;
 
 function getSecret(): string {
   const secret = process.env.SESSION_SECRET;
@@ -27,11 +41,11 @@ function sign(data: string): string {
   return base64url(createHmac("sha256", getSecret()).update(data).digest());
 }
 
-export function createSessionToken(payload: Omit<SessionPayload, "exp">): string {
-  const fullPayload: SessionPayload = {
+export function createSessionToken(payload: SessionInput): string {
+  const fullPayload = {
     ...payload,
     exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
-  };
+  } as SessionPayload;
   const encoded = base64url(Buffer.from(JSON.stringify(fullPayload)));
   const signature = sign(encoded);
   return `${encoded}.${signature}`;

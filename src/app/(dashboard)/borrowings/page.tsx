@@ -4,12 +4,24 @@ import { useEffect, useState } from "react";
 import { apiGet, apiSend } from "@/lib/apiClient";
 import PageShell from "@/components/PageShell";
 import DataTable, { Column } from "@/components/DataTable";
+import TableControls from "@/components/TableControls";
 import Modal from "@/components/Modal";
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass } from "@/components/FormField";
+import { useTableControls } from "@/lib/useTableControls";
 import type { BookDetail, BorrowingDetail, LibrarianDetail, MemberDetail } from "@/types";
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function matchesBorrowing(row: BorrowingDetail, query: string): boolean {
+  return (
+    row.BORROW_ID.toLowerCase().includes(query) ||
+    row.MEMBER_NAME.toLowerCase().includes(query) ||
+    row.BOOK_TITLE.toLowerCase().includes(query) ||
+    row.LIBRARIAN_NAME.toLowerCase().includes(query) ||
+    row.STATUS.toLowerCase().includes(query)
+  );
 }
 
 interface FormState {
@@ -49,6 +61,11 @@ export default function BorrowingsPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const { query, setQuery, page, setPage, totalPages, pageRows, totalCount } = useTableControls(
+    rows,
+    matchesBorrowing
+  );
 
   useEffect(() => {
     let active = true;
@@ -180,7 +197,16 @@ export default function BorrowingsPage() {
           + New Borrowing
         </button>
       </div>
-      <DataTable columns={columns} rows={rows} getKey={(r) => r.BORROW_ID} />
+      <TableControls
+        query={query}
+        onQueryChange={setQuery}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalCount={totalCount}
+        placeholder="Search borrowings..."
+      />
+      <DataTable columns={columns} rows={pageRows} getKey={(r) => r.BORROW_ID} />
 
       {modalOpen && (
         <Modal title="New Borrowing" onClose={() => setModalOpen(false)}>

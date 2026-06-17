@@ -6,17 +6,20 @@ import { makeRequest } from "../tests/helpers";
 describe("session token", () => {
   it("signs and verifies a valid token", () => {
     const token = createSessionToken({
+      role: "LIBRARIAN",
       librarianId: "L001",
       staffId: "STF-2020-001",
       fullName: "Test User",
       position: "Head Librarian",
     });
     const payload = verifySessionToken(token);
-    expect(payload?.staffId).toBe("STF-2020-001");
+    expect(payload?.role).toBe("LIBRARIAN");
+    expect(payload && "staffId" in payload && payload.staffId).toBe("STF-2020-001");
   });
 
   it("rejects a tampered token", () => {
     const token = createSessionToken({
+      role: "LIBRARIAN",
       librarianId: "L001",
       staffId: "STF-2020-001",
       fullName: "Test User",

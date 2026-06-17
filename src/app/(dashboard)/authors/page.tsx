@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { apiGet, apiSend } from "@/lib/apiClient";
 import PageShell from "@/components/PageShell";
 import DataTable, { Column } from "@/components/DataTable";
+import TableControls from "@/components/TableControls";
 import Modal from "@/components/Modal";
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass, dangerLinkClass, editLinkClass } from "@/components/FormField";
+import { useTableControls } from "@/lib/useTableControls";
 import type { Author } from "@/types";
 
 interface FormState {
@@ -16,6 +18,14 @@ interface FormState {
 
 const emptyForm: FormState = { author_id: "", author_name: "", nationality: "" };
 
+function matchesAuthor(row: Author, query: string): boolean {
+  return (
+    row.AUTHOR_ID.toLowerCase().includes(query) ||
+    row.AUTHOR_NAME.toLowerCase().includes(query) ||
+    (row.NATIONALITY ?? "").toLowerCase().includes(query)
+  );
+}
+
 export default function AuthorsPage() {
   const [rows, setRows] = useState<Author[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +35,11 @@ export default function AuthorsPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const { query, setQuery, page, setPage, totalPages, pageRows, totalCount } = useTableControls(
+    rows,
+    matchesAuthor
+  );
 
   useEffect(() => {
     let active = true;
@@ -131,7 +146,16 @@ export default function AuthorsPage() {
           + Add Author
         </button>
       </div>
-      <DataTable columns={columns} rows={rows} getKey={(r) => r.AUTHOR_ID} />
+      <TableControls
+        query={query}
+        onQueryChange={setQuery}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalCount={totalCount}
+        placeholder="Search authors..."
+      />
+      <DataTable columns={columns} rows={pageRows} getKey={(r) => r.AUTHOR_ID} />
 
       {modalMode && (
         <Modal title={modalMode === "create" ? "Add Author" : "Edit Author"} onClose={() => setModalMode(null)}>

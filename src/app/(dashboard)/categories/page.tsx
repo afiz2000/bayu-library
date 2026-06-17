@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { apiGet, apiSend } from "@/lib/apiClient";
 import PageShell from "@/components/PageShell";
 import DataTable, { Column } from "@/components/DataTable";
+import TableControls from "@/components/TableControls";
 import Modal from "@/components/Modal";
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass, dangerLinkClass, editLinkClass } from "@/components/FormField";
+import { useTableControls } from "@/lib/useTableControls";
 import type { CategoryDetail } from "@/types";
 
 interface FormState {
@@ -16,6 +18,14 @@ interface FormState {
 
 const emptyForm: FormState = { category_id: "", category_name: "", parent_id: "" };
 
+function matchesCategory(row: CategoryDetail, query: string): boolean {
+  return (
+    row.CATEGORY_ID.toLowerCase().includes(query) ||
+    row.CATEGORY_NAME.toLowerCase().includes(query) ||
+    (row.PARENT_NAME ?? "").toLowerCase().includes(query)
+  );
+}
+
 export default function CategoriesPage() {
   const [rows, setRows] = useState<CategoryDetail[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +35,11 @@ export default function CategoriesPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const { query, setQuery, page, setPage, totalPages, pageRows, totalCount } = useTableControls(
+    rows,
+    matchesCategory
+  );
 
   useEffect(() => {
     let active = true;
@@ -131,7 +146,16 @@ export default function CategoriesPage() {
           + Add Category
         </button>
       </div>
-      <DataTable columns={columns} rows={rows} getKey={(r) => r.CATEGORY_ID} />
+      <TableControls
+        query={query}
+        onQueryChange={setQuery}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalCount={totalCount}
+        placeholder="Search categories..."
+      />
+      <DataTable columns={columns} rows={pageRows} getKey={(r) => r.CATEGORY_ID} />
 
       {modalMode && (
         <Modal title={modalMode === "create" ? "Add Category" : "Edit Category"} onClose={() => setModalMode(null)}>

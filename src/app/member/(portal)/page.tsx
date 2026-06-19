@@ -16,10 +16,10 @@ const columns: Column<BorrowingDetail>[] = [
       <span
         className={
           r.STATUS === "RETURNED"
-            ? "rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+            ? "rounded-full bg-navy/10 px-2 py-0.5 text-xs font-medium text-navy/70"
             : r.STATUS === "OVERDUE"
-              ? "rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300"
-              : "rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+              ? "rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700"
+              : "rounded-full bg-gold-light px-2 py-0.5 text-xs font-medium text-gold-dark"
         }
       >
         {r.STATUS}

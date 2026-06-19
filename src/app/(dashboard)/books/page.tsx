@@ -303,7 +303,7 @@ export default function BooksPage() {
 
             {modalMode === "create" && (
               <Field label="Authors">
-                <div className="flex max-h-32 flex-col gap-1 overflow-y-auto rounded-md border border-black/[.08] p-2 dark:border-white/[.145]">
+                <div className="flex max-h-32 flex-col gap-1 overflow-y-auto rounded-md border border-navy/15 p-2">
                   {authors.map((a) => (
                     <label key={a.AUTHOR_ID} className="flex items-center gap-2 text-sm">
                       <input
@@ -318,12 +318,12 @@ export default function BooksPage() {
               </Field>
             )}
             {modalMode === "edit" && (
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-navy/50">
                 Author list can only be set when creating a book.
               </p>
             )}
 
-            {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+            {formError && <p className="text-sm text-red-600">{formError}</p>}
 
             <div className="flex justify-end gap-2">
               <button type="button" className={secondaryButtonClass} onClick={() => setModalMode(null)}>

@@ -194,7 +194,7 @@ export default function CategoriesPage() {
               </select>
             </Field>
 
-            {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+            {formError && <p className="text-sm text-red-600">{formError}</p>}
 
             <div className="flex justify-end gap-2">
               <button type="button" className={secondaryButtonClass} onClick={() => setModalMode(null)}>

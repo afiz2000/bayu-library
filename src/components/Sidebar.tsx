@@ -38,10 +38,11 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-black/[.08] bg-zinc-50 px-4 py-6 dark:border-white/[.145] dark:bg-zinc-950">
-      <h1 className="mb-6 px-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
-        Bayu Library
-      </h1>
+    <aside className="flex w-56 shrink-0 flex-col bg-navy px-4 py-6">
+      <div className="mb-6 px-2">
+        <p className="text-xl font-bold tracking-wide text-white">BAYU</p>
+        <p className="-mt-1 text-sm font-medium tracking-[0.2em] text-gold">LIBRARY</p>
+      </div>
       <nav className="flex flex-1 flex-col gap-1">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
@@ -51,8 +52,8 @@ export default function Sidebar() {
               href={item.href}
               className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                 active
-                  ? "bg-black text-white dark:bg-white dark:text-black"
-                  : "text-zinc-700 hover:bg-black/[.05] dark:text-zinc-300 dark:hover:bg-white/[.08]"
+                  ? "bg-gold text-navy-dark"
+                  : "text-white/80 hover:bg-white/10"
               }`}
             >
               {item.label}
@@ -61,22 +62,22 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-6 border-t border-black/[.08] pt-4 dark:border-white/[.145]">
+      <div className="mt-6 border-t border-white/15 pt-4">
         {user && (
           <div className="mb-2 px-2">
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{user.fullName}</p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">{user.position}</p>
+            <p className="text-sm font-medium text-white">{user.fullName}</p>
+            <p className="text-xs text-gold-light">{user.position}</p>
           </div>
         )}
         <button
           onClick={() => setShowPasswordModal(true)}
-          className="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-zinc-700 hover:bg-black/[.05] dark:text-zinc-300 dark:hover:bg-white/[.08]"
+          className="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-white/80 hover:bg-white/10"
         >
           Change Password
         </button>
         <button
           onClick={handleLogout}
-          className="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-zinc-700 hover:bg-black/[.05] dark:text-zinc-300 dark:hover:bg-white/[.08]"
+          className="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-white/80 hover:bg-white/10"
         >
           Logout
         </button>
@@ -127,7 +128,7 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
     <Modal title="Change Password" onClose={onClose}>
       {success ? (
         <div className="flex flex-col gap-4">
-          <p className="text-sm text-green-700 dark:text-green-400">
+          <p className="text-sm text-green-700">
             Password updated. Use your new password next time you sign in.
           </p>
           <div className="flex justify-end">
@@ -168,7 +169,7 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
             />
           </Field>
 
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
 
           <div className="flex justify-end gap-2">
             <button type="button" className={secondaryButtonClass} onClick={onClose}>

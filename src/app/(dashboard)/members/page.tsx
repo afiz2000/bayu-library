@@ -56,8 +56,8 @@ const columns: Column<MemberDetail>[] = [
       <span
         className={
           r.STATUS === "ACTIVE"
-            ? "rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-950 dark:text-green-300"
-            : "rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+            ? "rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700"
+            : "rounded-full bg-navy/10 px-2 py-0.5 text-xs font-medium text-navy/70"
         }
       >
         {r.STATUS}
@@ -313,7 +313,7 @@ export default function MembersPage() {
               </select>
             </Field>
 
-            {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+            {formError && <p className="text-sm text-red-600">{formError}</p>}
 
             <div className="flex justify-end gap-2">
               <button type="button" className={secondaryButtonClass} onClick={() => setModalMode(null)}>

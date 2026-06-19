@@ -27,7 +27,7 @@ export default function TableControls({
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
       />
-      <div className="flex items-center gap-3 text-sm text-zinc-600 dark:text-zinc-400">
+      <div className="flex items-center gap-3 text-sm text-navy/60">
         <span>
           {totalCount} result{totalCount === 1 ? "" : "s"}
         </span>
@@ -36,7 +36,7 @@ export default function TableControls({
             type="button"
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
-            className="rounded-md border border-black/[.08] px-2 py-1 disabled:opacity-40 dark:border-white/[.145]"
+            className="rounded-md border border-navy/15 px-2 py-1 text-navy disabled:opacity-40"
           >
             Prev
           </button>
@@ -47,7 +47,7 @@ export default function TableControls({
             type="button"
             disabled={page >= totalPages}
             onClick={() => onPageChange(page + 1)}
-            className="rounded-md border border-black/[.08] px-2 py-1 disabled:opacity-40 dark:border-white/[.145]"
+            className="rounded-md border border-navy/15 px-2 py-1 text-navy disabled:opacity-40"
           >
             Next
           </button>

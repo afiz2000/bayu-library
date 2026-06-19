@@ -28,16 +28,18 @@ export default function MemberPortalLayout({
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex items-center justify-between border-b border-black/[.08] px-10 py-4 dark:border-white/[.145]">
+      <header className="flex items-center justify-between bg-navy px-10 py-4">
         <div>
-          <p className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Bayu Library</p>
+          <p className="text-lg font-bold tracking-wide text-white">
+            BAYU <span className="text-gold">LIBRARY</span>
+          </p>
           {member && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">Welcome, {member.fullName}</p>
+            <p className="text-xs text-gold-light">Welcome, {member.fullName}</p>
           )}
         </div>
         <button
           onClick={handleLogout}
-          className="rounded-md border border-black/[.08] px-4 py-2 text-sm font-medium text-zinc-700 dark:border-white/[.145] dark:text-zinc-300"
+          className="rounded-md border border-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
         >
           Logout
         </button>

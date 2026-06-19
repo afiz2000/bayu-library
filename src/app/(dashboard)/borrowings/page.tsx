@@ -155,10 +155,10 @@ export default function BorrowingsPage() {
         <span
           className={
             r.STATUS === "RETURNED"
-              ? "rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+              ? "rounded-full bg-navy/10 px-2 py-0.5 text-xs font-medium text-navy/70"
               : r.STATUS === "OVERDUE"
-                ? "rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300"
-                : "rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                ? "rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700"
+                : "rounded-full bg-gold-light px-2 py-0.5 text-xs font-medium text-gold-dark"
           }
         >
           {r.STATUS}
@@ -170,14 +170,14 @@ export default function BorrowingsPage() {
       header: "Action",
       accessor: (r) =>
         r.STATUS === "RETURNED" ? (
-          <span className="text-xs text-zinc-400">
+          <span className="text-xs text-navy/40">
             Returned {r.RETURN_DATE ? new Date(r.RETURN_DATE).toLocaleDateString() : ""}
           </span>
         ) : (
           <button
             onClick={() => handleReturn(r.BORROW_ID)}
             disabled={returning === r.BORROW_ID}
-            className="rounded-md bg-black px-3 py-1 text-xs font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"
+            className="rounded-md bg-navy px-3 py-1 text-xs font-medium text-white hover:bg-navy-light disabled:opacity-50"
           >
             {returning === r.BORROW_ID ? "Returning..." : "Return"}
           </button>
@@ -283,7 +283,7 @@ export default function BorrowingsPage() {
               />
             </Field>
 
-            {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+            {formError && <p className="text-sm text-red-600">{formError}</p>}
 
             <div className="flex justify-end gap-2">
               <button type="button" className={secondaryButtonClass} onClick={() => setModalOpen(false)}>

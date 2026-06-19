@@ -51,19 +51,19 @@ export default function Home() {
 
   return (
     <main className="flex-1 px-10 py-10">
-      <h1 className="text-2xl font-semibold text-zinc-950 dark:text-zinc-50">Dashboard</h1>
-      <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+      <h1 className="text-2xl font-semibold text-navy">Dashboard</h1>
+      <p className="mt-1 text-sm text-navy/60">
         Bayu Library Management System — overview
       </p>
 
       {error && (
-        <p className="mt-6 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+        <p className="mt-6 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
           Failed to load stats: {error}
         </p>
       )}
 
       {!stats && !error && (
-        <p className="mt-6 text-sm text-zinc-500">Loading...</p>
+        <p className="mt-6 text-sm text-navy/50">Loading...</p>
       )}
 
       {stats && (
@@ -85,10 +85,10 @@ function StatCard({ href, label, value }: { href: string; label: string; value: 
   return (
     <Link
       href={href}
-      className="rounded-lg border border-black/[.08] bg-white p-5 transition-colors hover:border-black/[.2] dark:border-white/[.145] dark:bg-zinc-900 dark:hover:border-white/[.3]"
+      className="rounded-lg border border-t-4 border-navy/10 border-t-gold bg-white p-5 shadow-sm transition-colors hover:border-navy/25"
     >
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">{label}</p>
-      <p className="mt-2 text-3xl font-semibold text-zinc-950 dark:text-zinc-50">{value}</p>
+      <p className="text-sm text-navy/60">{label}</p>
+      <p className="mt-2 text-3xl font-semibold text-navy">{value}</p>
     </Link>
   );
 }

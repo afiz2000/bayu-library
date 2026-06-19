@@ -39,6 +39,21 @@ function defaultDueDate(): string {
   return d.toISOString().slice(0, 10);
 }
 
+// Per the proposal's Company Background: "members... borrow books for a
+// longer period" under the membership program. STANDARD/PREMIUM otherwise
+// has no other documented business rule (no reservation entity in the ERD).
+const LOAN_PERIOD_DAYS: Record<MemberDetail["MEMBERSHIP_TYPE"], number> = {
+  STANDARD: 14,
+  PREMIUM: 30,
+};
+
+function computeDueDate(borrowDateIso: string, membershipType?: MemberDetail["MEMBERSHIP_TYPE"]): string {
+  const days = membershipType ? LOAN_PERIOD_DAYS[membershipType] : LOAN_PERIOD_DAYS.STANDARD;
+  const d = new Date(borrowDateIso);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 const emptyForm: FormState = {
   borrow_id: "",
   member_id: "",
@@ -98,6 +113,8 @@ export default function BorrowingsPage() {
     const data = await apiGet<BorrowingDetail[]>("/api/borrowings");
     setRows(data);
   }
+
+  const selectedMember = members.find((m) => m.MEMBER_ID === form.member_id);
 
   function openCreate() {
     setForm({ ...emptyForm, borrow_date: todayIso(), due_date: defaultDueDate() });
@@ -223,13 +240,21 @@ export default function BorrowingsPage() {
               <select
                 className={inputClass}
                 value={form.member_id}
-                onChange={(e) => setForm({ ...form, member_id: e.target.value })}
+                onChange={(e) => {
+                  const memberId = e.target.value;
+                  const member = members.find((m) => m.MEMBER_ID === memberId);
+                  setForm((prev) => ({
+                    ...prev,
+                    member_id: memberId,
+                    due_date: computeDueDate(prev.borrow_date, member?.MEMBERSHIP_TYPE),
+                  }));
+                }}
                 required
               >
                 <option value="">— Select —</option>
                 {members.map((m) => (
                   <option key={m.MEMBER_ID} value={m.MEMBER_ID}>
-                    {m.FULL_NAME} ({m.MEMBER_ID})
+                    {m.FULL_NAME} ({m.MEMBER_ID}) — {m.MEMBERSHIP_TYPE}
                   </option>
                 ))}
               </select>
@@ -269,7 +294,14 @@ export default function BorrowingsPage() {
                 type="date"
                 className={inputClass}
                 value={form.borrow_date}
-                onChange={(e) => setForm({ ...form, borrow_date: e.target.value })}
+                onChange={(e) => {
+                  const borrowDate = e.target.value;
+                  setForm((prev) => ({
+                    ...prev,
+                    borrow_date: borrowDate,
+                    due_date: computeDueDate(borrowDate, selectedMember?.MEMBERSHIP_TYPE),
+                  }));
+                }}
                 required
               />
             </Field>
@@ -281,6 +313,11 @@ export default function BorrowingsPage() {
                 onChange={(e) => setForm({ ...form, due_date: e.target.value })}
                 required
               />
+              {selectedMember && (
+                <p className="mt-1 text-xs text-navy/50">
+                  Auto-set for {selectedMember.MEMBERSHIP_TYPE} membership ({LOAN_PERIOD_DAYS[selectedMember.MEMBERSHIP_TYPE]} days from borrow date) — you can still adjust manually.
+                </p>
+              )}
             </Field>
 
             {formError && <p className="text-sm text-red-600">{formError}</p>}

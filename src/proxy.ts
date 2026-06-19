@@ -21,7 +21,10 @@ export function proxy(request: NextRequest) {
   }
 
   const session = verifySessionToken(request.cookies.get(SESSION_COOKIE_NAME)?.value);
-  const isMemberArea = pathname.startsWith("/member") || pathname.startsWith("/api/member/");
+  const isMemberArea =
+    pathname === "/member" ||
+    pathname.startsWith("/member/") ||
+    pathname.startsWith("/api/member/");
   const loginPath = isMemberArea ? "/member/login" : "/login";
   const requiredRole = isMemberArea ? "MEMBER" : "LIBRARIAN";
 

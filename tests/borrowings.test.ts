@@ -83,7 +83,8 @@ describe("borrowings API", () => {
 
   it("rejects borrowing a book with no available copies", async () => {
     const bookId = "B012";
-    const ids = ["TST_BR03", "TST_BR04"];
+    const stock = await availableCopies(bookId);
+    const ids = Array.from({ length: stock }, (_, i) => `TST_BR_STOCK${i}`);
 
     for (const id of ids) {
       const res = await createBorrowing(
@@ -99,9 +100,11 @@ describe("borrowings API", () => {
       expect(res.status).toBe(201);
     }
 
+    expect(await availableCopies(bookId)).toBe(0);
+
     const overflowRes = await createBorrowing(
       makeRequest("POST", "/api/borrowings", {
-        borrow_id: "TST_BR05",
+        borrow_id: "TST_BR_OVERFLOW",
         member_id: MEMBER_ID,
         book_id: bookId,
         librarian_id: LIBRARIAN_ID,
@@ -116,5 +119,6 @@ describe("borrowings API", () => {
     for (const id of ids) {
       await returnBook(makeRequest("POST", `/api/borrowings/${id}/return`, { return_date: todayIso() }), ctx(id));
     }
+    expect(await availableCopies(bookId)).toBe(stock);
   });
 });

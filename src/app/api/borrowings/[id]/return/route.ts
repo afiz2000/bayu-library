@@ -46,7 +46,7 @@ export async function POST(
       fineAmount = fineResult.rows?.[0]?.FINE_AMOUNT ?? 0;
 
       await conn.execute(
-        `UPDATE BOOK SET AVAILABLE_COPIES = AVAILABLE_COPIES + 1
+        `UPDATE BOOK SET AVAILABLE_COPIES = LEAST(TOTAL_COPIES, AVAILABLE_COPIES + 1)
          WHERE BOOK_ID = (SELECT BOOK_ID FROM BORROWING WHERE BORROW_ID = :1)`,
         [id]
       );

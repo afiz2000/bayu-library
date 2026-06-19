@@ -125,7 +125,6 @@ export async function sweepOverdueBorrowings(): Promise<void> {
         FINE_AMOUNT = TRUNC(SYSDATE) - DUE_DATE
     WHERE RETURN_DATE IS NULL
       AND DUE_DATE < TRUNC(SYSDATE)
-      AND STATUS != 'OVERDUE'
   `);
 }
 

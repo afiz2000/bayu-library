@@ -1,5 +1,5 @@
 export const inputClass =
-  "w-full rounded-md border border-navy/15 bg-white px-3 py-2 text-sm text-navy-dark outline-none focus:border-gold focus:ring-1 focus:ring-gold";
+  "w-full rounded-md border border-navy/15 bg-white px-3 py-2 text-sm text-navy-dark outline-none focus:border-gold focus:ring-1 focus:ring-gold disabled:bg-navy/5 disabled:text-navy/60";
 
 export const primaryButtonClass =
   "rounded-md bg-navy px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-navy-light disabled:opacity-50";

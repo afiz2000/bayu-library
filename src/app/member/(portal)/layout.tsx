@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { MemberSession } from "@/lib/session";
+import LogoBadge from "@/components/LogoBadge";
 
 export default function MemberPortalLayout({
   children,
@@ -29,13 +30,16 @@ export default function MemberPortalLayout({
   return (
     <div className="flex flex-1 flex-col">
       <header className="flex items-center justify-between bg-navy px-10 py-4">
-        <div>
-          <p className="text-lg font-bold tracking-wide text-white">
-            BAYU <span className="text-gold">LIBRARY</span>
-          </p>
-          {member && (
-            <p className="text-xs text-gold-light">Welcome, {member.fullName}</p>
-          )}
+        <div className="flex items-center gap-3">
+          <LogoBadge size={36} />
+          <div>
+            <p className="text-lg font-bold tracking-wide text-white">
+              BAYU <span className="text-gold">LIBRARY</span>
+            </p>
+            {member && (
+              <p className="text-xs text-gold-light">Welcome, {member.fullName}</p>
+            )}
+          </div>
         </div>
         <button
           onClick={handleLogout}

@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { inputClass, primaryButtonClass } from "@/components/FormField";
+import LogoBadge from "@/components/LogoBadge";
 
 function LoginForm() {
   const router = useRouter();
@@ -37,14 +38,21 @@ function LoginForm() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-gold-light/20 px-4">
-      <div className="w-full max-w-sm overflow-hidden rounded-lg border-t-4 border-gold bg-white shadow-sm">
-        <div className="bg-navy px-8 py-6">
-          <p className="text-xl font-bold tracking-wide text-white">BAYU</p>
-          <p className="-mt-1 text-sm font-medium tracking-[0.2em] text-gold">LIBRARY</p>
+    <main className="relative flex flex-1 items-center justify-center overflow-hidden bg-[#fffefb] px-4">
+      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full border-[10px] border-navy/[.06]" />
+      <div className="pointer-events-none absolute -right-24 -bottom-24 h-72 w-72 rounded-full border-[10px] border-gold/15" />
+
+      <div className="relative w-full max-w-sm rounded-lg border-t-4 border-gold bg-white px-8 pt-2 pb-8 shadow-sm">
+        <div className="flex flex-col items-center gap-2 pt-6 pb-4 text-center">
+          <LogoBadge size={84} />
+          <div>
+            <p className="text-lg font-bold tracking-wide text-navy">BAYU LIBRARY</p>
+            <p className="text-[10px] font-semibold tracking-[0.25em] text-gold-dark">READ &middot; LEARN &middot; GROW</p>
+          </div>
         </div>
-        <div className="px-8 py-6">
-          <p className="text-sm text-navy/60">Staff sign in</p>
+
+        <div>
+          <p className="text-center text-sm text-navy/60">Staff sign in</p>
 
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
             <label className="flex flex-col gap-1 text-sm">

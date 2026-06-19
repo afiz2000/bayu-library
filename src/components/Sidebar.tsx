@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { LibrarianSession } from "@/lib/session";
 import Modal from "@/components/Modal";
+import LogoBadge from "@/components/LogoBadge";
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass } from "@/components/FormField";
 
 const NAV_ITEMS = [
@@ -39,9 +40,12 @@ export default function Sidebar() {
 
   return (
     <aside className="flex w-56 shrink-0 flex-col bg-navy px-4 py-6">
-      <div className="mb-6 px-2">
-        <p className="text-xl font-bold tracking-wide text-white">BAYU</p>
-        <p className="-mt-1 text-sm font-medium tracking-[0.2em] text-gold">LIBRARY</p>
+      <div className="mb-6 flex items-center gap-3 px-2">
+        <LogoBadge size={40} />
+        <div>
+          <p className="text-lg font-bold tracking-wide text-white">BAYU</p>
+          <p className="-mt-1 text-xs font-medium tracking-[0.2em] text-gold">LIBRARY</p>
+        </div>
       </div>
       <nav className="flex flex-1 flex-col gap-1">
         {NAV_ITEMS.map((item) => {

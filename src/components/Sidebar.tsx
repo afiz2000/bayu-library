@@ -3,19 +3,30 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import {
+  LayoutDashboard,
+  FolderTree,
+  PenLine,
+  Users,
+  UserCog,
+  BookOpen,
+  ArrowLeftRight,
+  KeyRound,
+  LogOut,
+} from "lucide-react";
 import type { LibrarianSession } from "@/lib/session";
 import Modal from "@/components/Modal";
 import LogoBadge from "@/components/LogoBadge";
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass } from "@/components/FormField";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Dashboard" },
-  { href: "/categories", label: "Categories" },
-  { href: "/authors", label: "Authors" },
-  { href: "/members", label: "Members" },
-  { href: "/librarians", label: "Librarians" },
-  { href: "/books", label: "Books" },
-  { href: "/borrowings", label: "Borrowings" },
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/categories", label: "Categories", icon: FolderTree },
+  { href: "/authors", label: "Authors", icon: PenLine },
+  { href: "/members", label: "Members", icon: Users },
+  { href: "/librarians", label: "Librarians", icon: UserCog },
+  { href: "/books", label: "Books", icon: BookOpen },
+  { href: "/borrowings", label: "Borrowings", icon: ArrowLeftRight },
 ];
 
 export default function Sidebar() {
@@ -50,16 +61,18 @@ export default function Sidebar() {
       <nav className="flex flex-1 flex-col gap-1">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
+          const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-all duration-150 ${
                 active
-                  ? "bg-gold text-navy-dark"
-                  : "text-white/80 hover:bg-white/10"
+                  ? "bg-gold text-navy-dark shadow-sm"
+                  : "text-white/80 hover:translate-x-0.5 hover:bg-white/10"
               }`}
             >
+              <Icon className="h-4 w-4" strokeWidth={2} />
               {item.label}
             </Link>
           );
@@ -75,14 +88,16 @@ export default function Sidebar() {
         )}
         <button
           onClick={() => setShowPasswordModal(true)}
-          className="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-white/80 hover:bg-white/10"
+          className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-medium text-white/80 transition-colors hover:bg-white/10"
         >
+          <KeyRound className="h-4 w-4" strokeWidth={2} />
           Change Password
         </button>
         <button
           onClick={handleLogout}
-          className="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-white/80 hover:bg-white/10"
+          className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-medium text-white/80 transition-colors hover:bg-white/10"
         >
+          <LogOut className="h-4 w-4" strokeWidth={2} />
           Logout
         </button>
       </div>

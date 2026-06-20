@@ -42,7 +42,7 @@ function MemberLoginForm() {
       <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full border-[10px] border-navy/[.06]" />
       <div className="pointer-events-none absolute -right-24 -bottom-24 h-72 w-72 rounded-full border-[10px] border-gold/15" />
 
-      <div className="relative w-full max-w-sm rounded-lg border-t-4 border-gold bg-white px-8 pt-2 pb-8 shadow-sm">
+      <div className="relative w-full max-w-sm animate-scale-in rounded-lg border-t-4 border-gold bg-white px-8 pt-2 pb-8 shadow-lg">
         <div className="flex flex-col items-center gap-2 pt-6 pb-4 text-center">
           <LogoBadge size={84} />
           <div>

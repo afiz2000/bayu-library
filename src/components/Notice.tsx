@@ -13,9 +13,13 @@ export default function Notice({ message, onDismiss, autoDismissMs = 6000 }: Not
   }, [onDismiss, autoDismissMs]);
 
   return (
-    <div className="mb-4 flex items-center justify-between rounded-md border border-gold bg-gold-light/40 px-4 py-2 text-sm text-navy">
+    <div className="mb-4 flex animate-slide-in items-center justify-between rounded-md border border-gold bg-gold-light/40 px-4 py-2 text-sm text-navy shadow-sm">
       <span>{message}</span>
-      <button onClick={onDismiss} className="text-navy/60 hover:text-navy" aria-label="Dismiss">
+      <button
+        onClick={onDismiss}
+        className="rounded-md p-1 text-navy/60 transition-colors hover:bg-navy/5 hover:text-navy"
+        aria-label="Dismiss"
+      >
         ✕
       </button>
     </div>

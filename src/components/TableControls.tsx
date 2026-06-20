@@ -36,7 +36,7 @@ export default function TableControls({
             type="button"
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
-            className="rounded-md border border-navy/15 px-2 py-1 text-navy disabled:opacity-40"
+            className="rounded-md border border-navy/15 px-2 py-1 text-navy transition-colors hover:bg-navy/5 disabled:opacity-40 disabled:hover:bg-transparent"
           >
             Prev
           </button>
@@ -47,7 +47,7 @@ export default function TableControls({
             type="button"
             disabled={page >= totalPages}
             onClick={() => onPageChange(page + 1)}
-            className="rounded-md border border-navy/15 px-2 py-1 text-navy disabled:opacity-40"
+            className="rounded-md border border-navy/15 px-2 py-1 text-navy transition-colors hover:bg-navy/5 disabled:opacity-40 disabled:hover:bg-transparent"
           >
             Next
           </button>

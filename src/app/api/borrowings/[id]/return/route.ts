@@ -4,8 +4,10 @@ import { executeTransaction } from "@/lib/db";
 import { toFriendlyMessage } from "@/lib/errors";
 import type { ApiResponse, ReturnBookPayload } from "@/types";
 
-// POST /api/borrowings/:id/return — mark a borrowing as returned, restock the
-// book, and auto-calculate the fine (RM1 per day late, matches the seeded dataset)
+// POST /api/borrowings/:id/return — mark a borrowing as returned and
+// auto-calculate the fine via fn_calculate_fine (RM1/day late). Restocking
+// AVAILABLE_COPIES is handled by trg_borrowing_after_return in the database
+// — see sql/bayu_library_FULL.sql.
 export async function POST(
   request: NextRequest,
   { params }: RouteContext<"/api/borrowings/[id]/return">
@@ -28,7 +30,7 @@ export async function POST(
       const updateResult = await conn.execute(
         `UPDATE BORROWING SET
            RETURN_DATE = TO_DATE(:1, 'YYYY-MM-DD'),
-           FINE_AMOUNT = GREATEST(0, TO_DATE(:2, 'YYYY-MM-DD') - DUE_DATE),
+           FINE_AMOUNT = fn_calculate_fine(DUE_DATE, TO_DATE(:2, 'YYYY-MM-DD')),
            STATUS = 'RETURNED'
          WHERE BORROW_ID = :3 AND STATUS != 'RETURNED'`,
         [return_date, return_date, id]
@@ -44,12 +46,6 @@ export async function POST(
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       fineAmount = fineResult.rows?.[0]?.FINE_AMOUNT ?? 0;
-
-      await conn.execute(
-        `UPDATE BOOK SET AVAILABLE_COPIES = LEAST(TOTAL_COPIES, AVAILABLE_COPIES + 1)
-         WHERE BOOK_ID = (SELECT BOOK_ID FROM BORROWING WHERE BORROW_ID = :1)`,
-        [id]
-      );
     });
 
     return NextResponse.json<ApiResponse<{ fine_amount: number }>>({

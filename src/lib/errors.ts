@@ -8,6 +8,7 @@ const ORA_MESSAGES: Record<string, string> = {
   "02291": "The referenced record does not exist. Check the ID you entered.",
   "02292": "Cannot delete this record because other records still reference it.",
   "12899": "One of the values entered is too long for this field.",
+  "20001": "This book has no available copies right now.",
 };
 
 export function toFriendlyMessage(err: unknown): string {

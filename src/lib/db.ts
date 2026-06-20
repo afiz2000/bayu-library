@@ -116,13 +116,14 @@ export async function executeTransaction(
 // ============================================================
 // Sweep Overdue Borrowings
 // Flip BORROWED -> OVERDUE once due_date has passed, and keep the
-// accruing fine in sync (RM1 per day late, matches the seeded dataset).
+// accruing fine in sync via fn_calculate_fine (RM1/day late) — see
+// sql/bayu_library_FULL.sql.
 // ============================================================
 export async function sweepOverdueBorrowings(): Promise<void> {
   await executeDML(`
     UPDATE BORROWING
     SET STATUS = 'OVERDUE',
-        FINE_AMOUNT = TRUNC(SYSDATE) - DUE_DATE
+        FINE_AMOUNT = fn_calculate_fine(DUE_DATE, TRUNC(SYSDATE))
     WHERE RETURN_DATE IS NULL
       AND DUE_DATE < TRUNC(SYSDATE)
   `);

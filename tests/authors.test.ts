@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { POST as createAuthor } from "@/app/api/authors/route";
 import { GET as getAuthor, PUT as updateAuthor, DELETE as deleteAuthor } from "@/app/api/authors/[id]/route";
-import { makeRequest, ctx } from "../tests/helpers";
+import { makeRequest, ctx, managementCookie } from "../tests/helpers";
 
 describe("authors API", () => {
   it("creates, reads, updates, and deletes an author (server-assigned ID)", async () => {
@@ -25,7 +25,10 @@ describe("authors API", () => {
     const afterUpdateBody = await afterUpdate.json();
     expect(afterUpdateBody.data.AUTHOR_NAME).toBe("Updated Author");
 
-    const deleteRes = await deleteAuthor(makeRequest("DELETE", `/api/authors/${id}`), ctx(id));
+    const deleteRes = await deleteAuthor(
+      makeRequest("DELETE", `/api/authors/${id}`, undefined, managementCookie()),
+      ctx(id)
+    );
     expect((await deleteRes.json()).success).toBe(true);
 
     const afterDelete = await getAuthor(makeRequest("GET", `/api/authors/${id}`), ctx(id));

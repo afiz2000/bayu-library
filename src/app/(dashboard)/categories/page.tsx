@@ -9,6 +9,8 @@ import Modal from "@/components/Modal";
 import Notice from "@/components/Notice";
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass, dangerLinkClass, editLinkClass } from "@/components/FormField";
 import { useTableControls } from "@/lib/useTableControls";
+import { useCurrentLibrarian } from "@/lib/useCurrentLibrarian";
+import { isManagementPosition } from "@/lib/isManagementPosition";
 import type { CategoryDetail } from "@/types";
 
 interface FormState {
@@ -28,6 +30,8 @@ function matchesCategory(row: CategoryDetail, query: string): boolean {
 }
 
 export default function CategoriesPage() {
+  const currentUser = useCurrentLibrarian();
+  const canDelete = currentUser ? isManagementPosition(currentUser.position) : false;
   const [rows, setRows] = useState<CategoryDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -149,9 +153,11 @@ export default function CategoriesPage() {
           <button className={editLinkClass} onClick={() => openEdit(r)}>
             Edit
           </button>
-          <button className={dangerLinkClass} onClick={() => handleDelete(r)}>
-            Delete
-          </button>
+          {canDelete && (
+            <button className={dangerLinkClass} onClick={() => handleDelete(r)}>
+              Delete
+            </button>
+          )}
         </div>
       ),
     },

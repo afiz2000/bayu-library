@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { createWithIdRetry, isUniqueConstraintError } from "@/lib/retryCreate";
 import { POST as createCategory } from "@/app/api/categories/route";
 import { DELETE as deleteCategory } from "@/app/api/categories/[id]/route";
-import { makeRequest, ctx } from "../tests/helpers";
+import { makeRequest, ctx, managementCookie } from "../tests/helpers";
 
 const PK_VIOLATION = new Error("ORA-00001: unique constraint (BAYU_LIBRARY.PK_CATEGORY) violated");
 const ISBN_VIOLATION = new Error("ORA-00001: unique constraint (BAYU_LIBRARY.UQ_BOOK_ISBN) violated");
@@ -78,6 +78,9 @@ describe("createWithIdRetry wired into a real route", () => {
     expect(body.data.reassigned).toBe(false);
     expect(body.data.category_id).toMatch(/^CAT\d+$/);
 
-    await deleteCategory(makeRequest("DELETE", `/api/categories/${body.data.category_id}`), ctx(body.data.category_id));
+    await deleteCategory(
+      makeRequest("DELETE", `/api/categories/${body.data.category_id}`, undefined, managementCookie()),
+      ctx(body.data.category_id)
+    );
   });
 });

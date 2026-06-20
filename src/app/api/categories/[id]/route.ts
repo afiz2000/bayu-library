@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeQuery, executeDML } from "@/lib/db";
 import { toFriendlyMessage } from "@/lib/errors";
+import { getLibrarianSession, isManagementPosition } from "@/lib/permissions";
 import type { ApiResponse, CategoryDetail } from "@/types";
 
 // GET /api/categories/:id
@@ -67,9 +68,17 @@ export async function PUT(
 
 // DELETE /api/categories/:id
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: RouteContext<"/api/categories/[id]">
 ) {
+  const session = getLibrarianSession(request);
+  if (!session || !isManagementPosition(session.position)) {
+    return NextResponse.json<ApiResponse<never>>(
+      { success: false, error: "Only a Head or Senior Librarian can delete records." },
+      { status: 403 }
+    );
+  }
+
   const { id } = await params;
   try {
     const result = await executeDML(`DELETE FROM CATEGORY WHERE CATEGORY_ID = :1`, [id]);

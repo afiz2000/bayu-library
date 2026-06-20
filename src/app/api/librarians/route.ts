@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { executeQuery, executeTransaction } from "@/lib/db";
 import { toFriendlyMessage } from "@/lib/errors";
 import { createWithIdRetry } from "@/lib/retryCreate";
+import { getLibrarianSession, isManagementPosition } from "@/lib/permissions";
 import type { ApiResponse, CreateLibrarianPayload, LibrarianDetail } from "@/types";
 
 // GET /api/librarians — list all librarians with PERSON details
@@ -25,6 +26,14 @@ export async function GET() {
 
 // POST /api/librarians — create PERSON + LIBRARIAN atomically
 export async function POST(request: NextRequest) {
+  const session = getLibrarianSession(request);
+  if (!session || !isManagementPosition(session.position)) {
+    return NextResponse.json<ApiResponse<never>>(
+      { success: false, error: "Only a Head or Senior Librarian can manage librarian accounts." },
+      { status: 403 }
+    );
+  }
+
   try {
     const body: CreateLibrarianPayload = await request.json();
     const { full_name, email, phone, address, gender, staff_id, position } = body;

@@ -9,6 +9,8 @@ import Modal from "@/components/Modal";
 import Notice from "@/components/Notice";
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass, dangerLinkClass, editLinkClass } from "@/components/FormField";
 import { useTableControls } from "@/lib/useTableControls";
+import { useCurrentLibrarian } from "@/lib/useCurrentLibrarian";
+import { isManagementPosition } from "@/lib/isManagementPosition";
 import type { Author, BookDetail, CategoryDetail } from "@/types";
 
 function matchesBook(row: BookDetail, query: string): boolean {
@@ -46,6 +48,8 @@ const emptyForm: FormState = {
 };
 
 export default function BooksPage() {
+  const currentUser = useCurrentLibrarian();
+  const canDelete = currentUser ? isManagementPosition(currentUser.position) : false;
   const [rows, setRows] = useState<BookDetail[]>([]);
   const [categories, setCategories] = useState<CategoryDetail[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
@@ -204,9 +208,11 @@ export default function BooksPage() {
           <button className={editLinkClass} onClick={() => openEdit(r)}>
             Edit
           </button>
-          <button className={dangerLinkClass} onClick={() => handleDelete(r)}>
-            Delete
-          </button>
+          {canDelete && (
+            <button className={dangerLinkClass} onClick={() => handleDelete(r)}>
+              Delete
+            </button>
+          )}
         </div>
       ),
     },

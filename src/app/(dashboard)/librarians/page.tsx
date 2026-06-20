@@ -9,6 +9,8 @@ import Modal from "@/components/Modal";
 import Notice from "@/components/Notice";
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass, dangerLinkClass, editLinkClass } from "@/components/FormField";
 import { useTableControls } from "@/lib/useTableControls";
+import { useCurrentLibrarian } from "@/lib/useCurrentLibrarian";
+import { isManagementPosition } from "@/lib/isManagementPosition";
 import type { LibrarianDetail } from "@/types";
 
 function matchesLibrarian(row: LibrarianDetail, query: string): boolean {
@@ -46,6 +48,8 @@ const emptyForm: FormState = {
 };
 
 export default function LibrariansPage() {
+  const currentUser = useCurrentLibrarian();
+  const canManage = currentUser ? isManagementPosition(currentUser.position) : false;
   const [rows, setRows] = useState<LibrarianDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -186,27 +190,41 @@ export default function LibrariansPage() {
     { header: "Position", accessor: (r) => r.POSITION },
     {
       header: "Actions",
-      accessor: (r) => (
-        <div className="flex gap-3">
-          <button className={editLinkClass} onClick={() => openEdit(r)}>
-            Edit
-          </button>
-          <button className={dangerLinkClass} onClick={() => handleDelete(r)}>
-            Delete
-          </button>
-        </div>
-      ),
+      accessor: (r) =>
+        canManage ? (
+          <div className="flex gap-3">
+            <button className={editLinkClass} onClick={() => openEdit(r)}>
+              Edit
+            </button>
+            <button className={dangerLinkClass} onClick={() => handleDelete(r)}>
+              Delete
+            </button>
+          </div>
+        ) : (
+          <span className="text-xs text-navy/40">View only</span>
+        ),
     },
   ];
 
   return (
-    <PageShell title="Librarians" description="Library staff accounts" loading={loading} error={error}>
+    <PageShell
+      title="Librarians"
+      description={
+        canManage
+          ? "Library staff accounts"
+          : "Library staff accounts (only Head/Senior Librarian can add, edit, or remove staff)"
+      }
+      loading={loading}
+      error={error}
+    >
       {notice && <Notice message={notice} onDismiss={() => setNotice(null)} />}
-      <div className="mb-4">
-        <button className={primaryButtonClass} onClick={openCreate}>
-          + Add Librarian
-        </button>
-      </div>
+      {canManage && (
+        <div className="mb-4">
+          <button className={primaryButtonClass} onClick={openCreate}>
+            + Add Librarian
+          </button>
+        </div>
+      )}
       <TableControls
         query={query}
         onQueryChange={setQuery}

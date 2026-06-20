@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { GET as listCategories, POST as createCategory } from "@/app/api/categories/route";
 import { GET as getCategory, PUT as updateCategory, DELETE as deleteCategory } from "@/app/api/categories/[id]/route";
-import { makeRequest, ctx } from "../tests/helpers";
+import { makeRequest, ctx, managementCookie, staffCookie } from "../tests/helpers";
 
 describe("categories API", () => {
   it("creates, reads, updates, and deletes a category (server-assigned ID)", async () => {
@@ -30,7 +30,10 @@ describe("categories API", () => {
     const afterUpdateBody = await afterUpdate.json();
     expect(afterUpdateBody.data.CATEGORY_NAME).toBe("Updated Name");
 
-    const deleteRes = await deleteCategory(makeRequest("DELETE", `/api/categories/${id}`), ctx(id));
+    const deleteRes = await deleteCategory(
+      makeRequest("DELETE", `/api/categories/${id}`, undefined, managementCookie()),
+      ctx(id)
+    );
     const deleteBody = await deleteRes.json();
     expect(deleteBody.success).toBe(true);
 
@@ -46,8 +49,33 @@ describe("categories API", () => {
 
     expect(body1.data.category_id).not.toBe(body2.data.category_id);
 
-    await deleteCategory(makeRequest("DELETE", `/api/categories/${body1.data.category_id}`), ctx(body1.data.category_id));
-    await deleteCategory(makeRequest("DELETE", `/api/categories/${body2.data.category_id}`), ctx(body2.data.category_id));
+    await deleteCategory(
+      makeRequest("DELETE", `/api/categories/${body1.data.category_id}`, undefined, managementCookie()),
+      ctx(body1.data.category_id)
+    );
+    await deleteCategory(
+      makeRequest("DELETE", `/api/categories/${body2.data.category_id}`, undefined, managementCookie()),
+      ctx(body2.data.category_id)
+    );
+  });
+
+  it("rejects delete from a non-management (staff) librarian, and from no session at all", async () => {
+    const createRes = await createCategory(makeRequest("POST", "/api/categories", { category_name: "Protected" }));
+    const id = (await createRes.json()).data.category_id;
+
+    const staffAttempt = await deleteCategory(
+      makeRequest("DELETE", `/api/categories/${id}`, undefined, staffCookie()),
+      ctx(id)
+    );
+    expect(staffAttempt.status).toBe(403);
+
+    const noSessionAttempt = await deleteCategory(makeRequest("DELETE", `/api/categories/${id}`), ctx(id));
+    expect(noSessionAttempt.status).toBe(403);
+
+    // confirm it's still there, then clean up properly
+    const stillThere = await getCategory(makeRequest("GET", `/api/categories/${id}`), ctx(id));
+    expect(stillThere.status).toBe(200);
+    await deleteCategory(makeRequest("DELETE", `/api/categories/${id}`, undefined, managementCookie()), ctx(id));
   });
 
   it("lists categories including seeded data", async () => {

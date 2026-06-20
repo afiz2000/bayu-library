@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeQuery, executeTransaction } from "@/lib/db";
 import { toFriendlyMessage } from "@/lib/errors";
+import { getLibrarianSession, isManagementPosition } from "@/lib/permissions";
 import type { ApiResponse, LibrarianDetail, UpdateLibrarianPayload } from "@/types";
+
+function requireManagement(request: NextRequest): NextResponse<ApiResponse<never>> | null {
+  const session = getLibrarianSession(request);
+  if (!session || !isManagementPosition(session.position)) {
+    return NextResponse.json<ApiResponse<never>>(
+      { success: false, error: "Only a Head or Senior Librarian can manage librarian accounts." },
+      { status: 403 }
+    );
+  }
+  return null;
+}
 
 // GET /api/librarians/:id
 export async function GET(
@@ -40,6 +52,9 @@ export async function PUT(
   request: NextRequest,
   { params }: RouteContext<"/api/librarians/[id]">
 ) {
+  const permissionError = requireManagement(request);
+  if (permissionError) return permissionError;
+
   const { id } = await params;
   try {
     const body: UpdateLibrarianPayload = await request.json();
@@ -89,9 +104,12 @@ export async function PUT(
 
 // DELETE /api/librarians/:id — remove LIBRARIAN + PERSON atomically
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: RouteContext<"/api/librarians/[id]">
 ) {
+  const permissionError = requireManagement(request);
+  if (permissionError) return permissionError;
+
   const { id } = await params;
   try {
     const existing = await executeQuery<{ PERSON_ID: string }>(

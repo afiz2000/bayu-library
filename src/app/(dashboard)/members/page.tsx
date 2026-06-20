@@ -9,6 +9,8 @@ import Modal from "@/components/Modal";
 import Notice from "@/components/Notice";
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass, dangerLinkClass, editLinkClass } from "@/components/FormField";
 import { useTableControls } from "@/lib/useTableControls";
+import { useCurrentLibrarian } from "@/lib/useCurrentLibrarian";
+import { isManagementPosition } from "@/lib/isManagementPosition";
 import type { MemberDetail } from "@/types";
 
 function matchesMember(row: MemberDetail, query: string): boolean {
@@ -69,6 +71,8 @@ const columns: Column<MemberDetail>[] = [
 ];
 
 export default function MembersPage() {
+  const currentUser = useCurrentLibrarian();
+  const canDelete = currentUser ? isManagementPosition(currentUser.position) : false;
   const [rows, setRows] = useState<MemberDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -212,9 +216,11 @@ export default function MembersPage() {
           <button className={editLinkClass} onClick={() => openEdit(r)}>
             Edit
           </button>
-          <button className={dangerLinkClass} onClick={() => handleDelete(r)}>
-            Delete
-          </button>
+          {canDelete && (
+            <button className={dangerLinkClass} onClick={() => handleDelete(r)}>
+              Delete
+            </button>
+          )}
         </div>
       ),
     },

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { POST as createBook } from "@/app/api/books/route";
 import { GET as getBook, PUT as updateBook, DELETE as deleteBook } from "@/app/api/books/[id]/route";
-import { makeRequest, ctx } from "../tests/helpers";
+import { makeRequest, ctx, managementCookie } from "../tests/helpers";
 
 describe("books API", () => {
   it("creates a book with authors (server-assigned ID), reads it back with category/author names", async () => {
@@ -27,7 +27,7 @@ describe("books API", () => {
     expect(getBody.data.CATEGORY_NAME).toBe("Science");
     expect(getBody.data.AUTHORS).toContain("Hamka");
 
-    await deleteBook(makeRequest("DELETE", `/api/books/${id}`), ctx(id));
+    await deleteBook(makeRequest("DELETE", `/api/books/${id}`, undefined, managementCookie()), ctx(id));
   });
 
   it("partial update (regression: omitting numeric fields must not throw ORA-00932/NJS-012)", async () => {
@@ -59,7 +59,7 @@ describe("books API", () => {
     expect(afterBody.data.PUBLISH_YEAR).toBe(2020);
     expect(afterBody.data.TOTAL_COPIES).toBe(2);
 
-    await deleteBook(makeRequest("DELETE", `/api/books/${id}`), ctx(id));
+    await deleteBook(makeRequest("DELETE", `/api/books/${id}`, undefined, managementCookie()), ctx(id));
   });
 
   it("returns 404 for updating a nonexistent book", async () => {
@@ -87,6 +87,9 @@ describe("books API", () => {
     expect(secondBody.success).toBe(false);
     expect(secondBody.error).not.toMatch(/ORA-/);
 
-    await deleteBook(makeRequest("DELETE", `/api/books/${firstBody.data.book_id}`), ctx(firstBody.data.book_id));
+    await deleteBook(
+      makeRequest("DELETE", `/api/books/${firstBody.data.book_id}`, undefined, managementCookie()),
+      ctx(firstBody.data.book_id)
+    );
   });
 });

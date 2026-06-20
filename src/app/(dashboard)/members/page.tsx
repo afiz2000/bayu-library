@@ -6,6 +6,7 @@ import PageShell from "@/components/PageShell";
 import DataTable, { Column } from "@/components/DataTable";
 import TableControls from "@/components/TableControls";
 import Modal from "@/components/Modal";
+import Notice from "@/components/Notice";
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass, dangerLinkClass, editLinkClass } from "@/components/FormField";
 import { useTableControls } from "@/lib/useTableControls";
 import type { MemberDetail } from "@/types";
@@ -76,6 +77,7 @@ export default function MembersPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const { query, setQuery, page, setPage, totalPages, pageRows, totalCount } = useTableControls(
     rows,
@@ -140,22 +142,33 @@ export default function MembersPage() {
     setSubmitting(true);
     setFormError(null);
     try {
-      let result;
       if (modalMode === "create") {
-        result = await apiSend("/api/members", "POST", {
-          person_id: form.person_id,
-          full_name: form.full_name,
-          email: form.email,
-          phone: form.phone || undefined,
-          address: form.address || undefined,
-          gender: form.gender,
-          member_id: form.member_id,
-          membership_date: form.membership_date,
-          membership_type: form.membership_type,
-          status: form.status,
-        });
+        const result = await apiSend<{ person_id: string; member_id: string; reassigned: boolean }>(
+          "/api/members",
+          "POST",
+          {
+            person_id: form.person_id,
+            full_name: form.full_name,
+            email: form.email,
+            phone: form.phone || undefined,
+            address: form.address || undefined,
+            gender: form.gender,
+            member_id: form.member_id,
+            membership_date: form.membership_date,
+            membership_type: form.membership_type,
+            status: form.status,
+          }
+        );
+        if (!result.success) {
+          throw new Error(result.error ?? "Request failed");
+        }
+        if (result.data?.reassigned) {
+          setNotice(
+            `Member ID was reassigned to ${result.data.member_id} (Person ID ${result.data.person_id}) — the suggested ID was taken in the meantime.`
+          );
+        }
       } else {
-        result = await apiSend(`/api/members/${form.member_id}`, "PUT", {
+        const result = await apiSend(`/api/members/${form.member_id}`, "PUT", {
           full_name: form.full_name,
           email: form.email,
           phone: form.phone || undefined,
@@ -163,10 +176,9 @@ export default function MembersPage() {
           membership_type: form.membership_type,
           status: form.status,
         });
-      }
-
-      if (!result.success) {
-        throw new Error(result.error ?? "Request failed");
+        if (!result.success) {
+          throw new Error(result.error ?? "Request failed");
+        }
       }
 
       setModalMode(null);
@@ -210,6 +222,7 @@ export default function MembersPage() {
 
   return (
     <PageShell title="Members" description="Registered library members" loading={loading} error={error}>
+      {notice && <Notice message={notice} onDismiss={() => setNotice(null)} />}
       <div className="mb-4">
         <button className={primaryButtonClass} onClick={openCreate}>
           + Add Member

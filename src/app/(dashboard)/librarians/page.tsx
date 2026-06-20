@@ -6,6 +6,7 @@ import PageShell from "@/components/PageShell";
 import DataTable, { Column } from "@/components/DataTable";
 import TableControls from "@/components/TableControls";
 import Modal from "@/components/Modal";
+import Notice from "@/components/Notice";
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass, dangerLinkClass, editLinkClass } from "@/components/FormField";
 import { useTableControls } from "@/lib/useTableControls";
 import type { LibrarianDetail } from "@/types";
@@ -53,6 +54,7 @@ export default function LibrariansPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const { query, setQuery, page, setPage, totalPages, pageRows, totalCount } = useTableControls(
     rows,
@@ -116,21 +118,32 @@ export default function LibrariansPage() {
     setSubmitting(true);
     setFormError(null);
     try {
-      let result;
       if (modalMode === "create") {
-        result = await apiSend("/api/librarians", "POST", {
-          person_id: form.person_id,
-          full_name: form.full_name,
-          email: form.email,
-          phone: form.phone || undefined,
-          address: form.address || undefined,
-          gender: form.gender,
-          librarian_id: form.librarian_id,
-          staff_id: form.staff_id,
-          position: form.position,
-        });
+        const result = await apiSend<{ person_id: string; librarian_id: string; reassigned: boolean }>(
+          "/api/librarians",
+          "POST",
+          {
+            person_id: form.person_id,
+            full_name: form.full_name,
+            email: form.email,
+            phone: form.phone || undefined,
+            address: form.address || undefined,
+            gender: form.gender,
+            librarian_id: form.librarian_id,
+            staff_id: form.staff_id,
+            position: form.position,
+          }
+        );
+        if (!result.success) {
+          throw new Error(result.error ?? "Request failed");
+        }
+        if (result.data?.reassigned) {
+          setNotice(
+            `Librarian ID was reassigned to ${result.data.librarian_id} (Person ID ${result.data.person_id}) — the suggested ID was taken in the meantime.`
+          );
+        }
       } else {
-        result = await apiSend(`/api/librarians/${form.librarian_id}`, "PUT", {
+        const result = await apiSend(`/api/librarians/${form.librarian_id}`, "PUT", {
           full_name: form.full_name,
           email: form.email,
           phone: form.phone || undefined,
@@ -138,10 +151,9 @@ export default function LibrariansPage() {
           staff_id: form.staff_id,
           position: form.position,
         });
-      }
-
-      if (!result.success) {
-        throw new Error(result.error ?? "Request failed");
+        if (!result.success) {
+          throw new Error(result.error ?? "Request failed");
+        }
       }
 
       setModalMode(null);
@@ -189,6 +201,7 @@ export default function LibrariansPage() {
 
   return (
     <PageShell title="Librarians" description="Library staff accounts" loading={loading} error={error}>
+      {notice && <Notice message={notice} onDismiss={() => setNotice(null)} />}
       <div className="mb-4">
         <button className={primaryButtonClass} onClick={openCreate}>
           + Add Librarian

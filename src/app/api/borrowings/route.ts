@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeQuery, executeTransaction, sweepOverdueBorrowings } from "@/lib/db";
 import { toFriendlyMessage } from "@/lib/errors";
+import { createWithIdRetry } from "@/lib/retryCreate";
 import type { ApiResponse, BorrowingDetail, CreateBorrowingPayload } from "@/types";
 
 // GET /api/borrowings — list all borrowings with member/book/librarian names
@@ -34,35 +35,37 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body: CreateBorrowingPayload = await request.json();
-    const { borrow_id, member_id, book_id, librarian_id, borrow_date, due_date } = body;
+    const { member_id, book_id, librarian_id, borrow_date, due_date } = body;
 
-    if (!borrow_id || !member_id || !book_id || !librarian_id || !borrow_date || !due_date) {
+    if (!member_id || !book_id || !librarian_id || !borrow_date || !due_date) {
       return NextResponse.json<ApiResponse<never>>(
         { success: false, error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    await executeTransaction(async (conn) => {
-      const result = await conn.execute(
-        `UPDATE BOOK SET AVAILABLE_COPIES = AVAILABLE_COPIES - 1
-         WHERE BOOK_ID = :1 AND AVAILABLE_COPIES > 0`,
-        [book_id]
-      );
+    const { ids, reassigned } = await createWithIdRetry({ borrow_id: "borrowing" }, async (ids) => {
+      await executeTransaction(async (conn) => {
+        const result = await conn.execute(
+          `UPDATE BOOK SET AVAILABLE_COPIES = AVAILABLE_COPIES - 1
+           WHERE BOOK_ID = :1 AND AVAILABLE_COPIES > 0`,
+          [book_id]
+        );
 
-      if (result.rowsAffected === 0) {
-        throw new Error("Book not available for borrowing");
-      }
+        if (result.rowsAffected === 0) {
+          throw new Error("Book not available for borrowing");
+        }
 
-      await conn.execute(
-        `INSERT INTO BORROWING (BORROW_ID, MEMBER_ID, BOOK_ID, LIBRARIAN_ID, BORROW_DATE, DUE_DATE, FINE_AMOUNT, STATUS)
-         VALUES (:1, :2, :3, :4, TO_DATE(:5, 'YYYY-MM-DD'), TO_DATE(:6, 'YYYY-MM-DD'), 0, 'BORROWED')`,
-        [borrow_id, member_id, book_id, librarian_id, borrow_date, due_date]
-      );
+        await conn.execute(
+          `INSERT INTO BORROWING (BORROW_ID, MEMBER_ID, BOOK_ID, LIBRARIAN_ID, BORROW_DATE, DUE_DATE, FINE_AMOUNT, STATUS)
+           VALUES (:1, :2, :3, :4, TO_DATE(:5, 'YYYY-MM-DD'), TO_DATE(:6, 'YYYY-MM-DD'), 0, 'BORROWED')`,
+          [ids.borrow_id, member_id, book_id, librarian_id, borrow_date, due_date]
+        );
+      });
     });
 
-    return NextResponse.json<ApiResponse<never>>(
-      { success: true, message: "Borrowing created" },
+    return NextResponse.json<ApiResponse<{ borrow_id: string; reassigned: boolean }>>(
+      { success: true, message: "Borrowing created", data: { borrow_id: ids.borrow_id, reassigned } },
       { status: 201 }
     );
   } catch (err) {

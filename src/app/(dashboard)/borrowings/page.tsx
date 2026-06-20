@@ -6,6 +6,7 @@ import PageShell from "@/components/PageShell";
 import DataTable, { Column } from "@/components/DataTable";
 import TableControls from "@/components/TableControls";
 import Modal from "@/components/Modal";
+import Notice from "@/components/Notice";
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass } from "@/components/FormField";
 import { useTableControls } from "@/lib/useTableControls";
 import type { BookDetail, BorrowingDetail, LibrarianDetail, MemberDetail } from "@/types";
@@ -76,6 +77,7 @@ export default function BorrowingsPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const { query, setQuery, page, setPage, totalPages, pageRows, totalCount } = useTableControls(
     rows,
@@ -132,9 +134,12 @@ export default function BorrowingsPage() {
     setSubmitting(true);
     setFormError(null);
     try {
-      const result = await apiSend("/api/borrowings", "POST", form);
+      const result = await apiSend<{ borrow_id: string; reassigned: boolean }>("/api/borrowings", "POST", form);
       if (!result.success) {
         throw new Error(result.error ?? "Request failed");
+      }
+      if (result.data?.reassigned) {
+        setNotice(`Borrow ID was reassigned to ${result.data.borrow_id} (the suggested ID was taken in the meantime).`);
       }
       setModalOpen(false);
       await Promise.all([refresh(), apiGet<BookDetail[]>("/api/books").then(setBooks)]);
@@ -214,6 +219,7 @@ export default function BorrowingsPage() {
       loading={loading}
       error={error}
     >
+      {notice && <Notice message={notice} onDismiss={() => setNotice(null)} />}
       <div className="mb-4">
         <button className={primaryButtonClass} onClick={openCreate}>
           + New Borrowing

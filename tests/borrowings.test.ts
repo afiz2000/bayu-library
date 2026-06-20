@@ -5,14 +5,18 @@ import { GET as getBook } from "@/app/api/books/[id]/route";
 import { executeDML } from "@/lib/db";
 import { makeRequest, ctx } from "../tests/helpers";
 
-// BORROWING has no DELETE endpoint by design (audit trail), so tests
-// must purge their own rows directly to avoid polluting real data.
-afterAll(async () => {
-  await executeDML(`DELETE FROM BORROWING WHERE BORROW_ID LIKE 'TST_%'`);
-});
-
 const MEMBER_ID = "M001";
 const LIBRARIAN_ID = "L001";
+
+// BORROWING has no DELETE endpoint by design (audit trail), so tests must
+// purge their own server-assigned rows directly to avoid polluting real data.
+const createdIds: string[] = [];
+
+afterAll(async () => {
+  if (createdIds.length === 0) return;
+  const placeholders = createdIds.map((_, i) => `:${i + 1}`).join(", ");
+  await executeDML(`DELETE FROM BORROWING WHERE BORROW_ID IN (${placeholders})`, createdIds);
+});
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -23,25 +27,34 @@ async function availableCopies(bookId: string): Promise<number> {
   return (await res.json()).data.AVAILABLE_COPIES;
 }
 
+async function createTestBorrowing(overrides: Record<string, unknown>) {
+  const res = await createBorrowing(
+    makeRequest("POST", "/api/borrowings", {
+      member_id: MEMBER_ID,
+      librarian_id: LIBRARIAN_ID,
+      ...overrides,
+    })
+  );
+  const body = await res.json();
+  if (body.success) createdIds.push(body.data.borrow_id);
+  return { res, body };
+}
+
 describe("borrowings API", () => {
   it("decrements available copies on borrow and restores them on return with zero fine", async () => {
     const bookId = "B002";
     const before = await availableCopies(bookId);
 
-    const borrowId = "TST_BR01";
-    const createRes = await createBorrowing(
-      makeRequest("POST", "/api/borrowings", {
-        borrow_id: borrowId,
-        member_id: MEMBER_ID,
-        book_id: bookId,
-        librarian_id: LIBRARIAN_ID,
-        borrow_date: todayIso(),
-        due_date: todayIso(),
-      })
-    );
+    const { res: createRes, body: createBody } = await createTestBorrowing({
+      book_id: bookId,
+      borrow_date: todayIso(),
+      due_date: todayIso(),
+    });
     expect(createRes.status).toBe(201);
+    expect(createBody.data.borrow_id).toMatch(/^BR\d+$/);
     expect(await availableCopies(bookId)).toBe(before - 1);
 
+    const borrowId = createBody.data.borrow_id;
     const returnRes = await returnBook(
       makeRequest("POST", `/api/borrowings/${borrowId}/return`, { return_date: todayIso() }),
       ctx(borrowId)
@@ -54,18 +67,13 @@ describe("borrowings API", () => {
 
   it("auto-flips overdue borrowings to OVERDUE and computes a fine on return", async () => {
     const bookId = "B003";
-    const borrowId = "TST_BR02";
 
-    await createBorrowing(
-      makeRequest("POST", "/api/borrowings", {
-        borrow_id: borrowId,
-        member_id: MEMBER_ID,
-        book_id: bookId,
-        librarian_id: LIBRARIAN_ID,
-        borrow_date: "2020-01-01",
-        due_date: "2020-01-15",
-      })
-    );
+    const { body: createBody } = await createTestBorrowing({
+      book_id: bookId,
+      borrow_date: "2020-01-01",
+      due_date: "2020-01-15",
+    });
+    const borrowId = createBody.data.borrow_id;
 
     const listRes = await listBorrowings();
     const listBody = await listRes.json();
@@ -84,39 +92,29 @@ describe("borrowings API", () => {
   it("rejects borrowing a book with no available copies", async () => {
     const bookId = "B012";
     const stock = await availableCopies(bookId);
-    const ids = Array.from({ length: stock }, (_, i) => `TST_BR_STOCK${i}`);
+    const borrowIds: string[] = [];
 
-    for (const id of ids) {
-      const res = await createBorrowing(
-        makeRequest("POST", "/api/borrowings", {
-          borrow_id: id,
-          member_id: MEMBER_ID,
-          book_id: bookId,
-          librarian_id: LIBRARIAN_ID,
-          borrow_date: todayIso(),
-          due_date: todayIso(),
-        })
-      );
+    for (let i = 0; i < stock; i++) {
+      const { res, body } = await createTestBorrowing({
+        book_id: bookId,
+        borrow_date: todayIso(),
+        due_date: todayIso(),
+      });
       expect(res.status).toBe(201);
+      borrowIds.push(body.data.borrow_id);
     }
 
     expect(await availableCopies(bookId)).toBe(0);
 
-    const overflowRes = await createBorrowing(
-      makeRequest("POST", "/api/borrowings", {
-        borrow_id: "TST_BR_OVERFLOW",
-        member_id: MEMBER_ID,
-        book_id: bookId,
-        librarian_id: LIBRARIAN_ID,
-        borrow_date: todayIso(),
-        due_date: todayIso(),
-      })
-    );
+    const { res: overflowRes, body: overflowBody } = await createTestBorrowing({
+      book_id: bookId,
+      borrow_date: todayIso(),
+      due_date: todayIso(),
+    });
     expect(overflowRes.status).toBe(409);
-    const overflowBody = await overflowRes.json();
     expect(overflowBody.error).not.toMatch(/ORA-/);
 
-    for (const id of ids) {
+    for (const id of borrowIds) {
       await returnBook(makeRequest("POST", `/api/borrowings/${id}/return`, { return_date: todayIso() }), ctx(id));
     }
     expect(await availableCopies(bookId)).toBe(stock);

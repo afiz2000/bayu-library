@@ -6,6 +6,7 @@ import PageShell from "@/components/PageShell";
 import DataTable, { Column } from "@/components/DataTable";
 import TableControls from "@/components/TableControls";
 import Modal from "@/components/Modal";
+import Notice from "@/components/Notice";
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass, dangerLinkClass, editLinkClass } from "@/components/FormField";
 import { useTableControls } from "@/lib/useTableControls";
 import type { Author } from "@/types";
@@ -35,6 +36,7 @@ export default function AuthorsPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const { query, setQuery, page, setPage, totalPages, pageRows, totalCount } = useTableControls(
     rows,
@@ -94,13 +96,24 @@ export default function AuthorsPage() {
         author_name: form.author_name,
         nationality: form.nationality || null,
       };
-      const result =
-        modalMode === "create"
-          ? await apiSend("/api/authors", "POST", payload)
-          : await apiSend(`/api/authors/${form.author_id}`, "PUT", payload);
 
-      if (!result.success) {
-        throw new Error(result.error ?? "Request failed");
+      if (modalMode === "create") {
+        const result = await apiSend<{ author_id: string; reassigned: boolean }>(
+          "/api/authors",
+          "POST",
+          payload
+        );
+        if (!result.success) {
+          throw new Error(result.error ?? "Request failed");
+        }
+        if (result.data?.reassigned) {
+          setNotice(`Author ID was reassigned to ${result.data.author_id} (the suggested ID was taken in the meantime).`);
+        }
+      } else {
+        const result = await apiSend(`/api/authors/${form.author_id}`, "PUT", payload);
+        if (!result.success) {
+          throw new Error(result.error ?? "Request failed");
+        }
       }
 
       setModalMode(null);
@@ -146,6 +159,7 @@ export default function AuthorsPage() {
 
   return (
     <PageShell title="Authors" description="All authors in the catalogue" loading={loading} error={error}>
+      {notice && <Notice message={notice} onDismiss={() => setNotice(null)} />}
       <div className="mb-4">
         <button className={primaryButtonClass} onClick={openCreate}>
           + Add Author

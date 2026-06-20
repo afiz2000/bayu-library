@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeQuery, executeDML } from "@/lib/db";
 import { toFriendlyMessage } from "@/lib/errors";
+import { createWithIdRetry } from "@/lib/retryCreate";
 import type { ApiResponse, Author } from "@/types";
 
 // GET /api/authors — list all authors
@@ -22,22 +23,24 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { author_id, author_name, nationality } = body;
+    const { author_name, nationality } = body;
 
-    if (!author_id || !author_name) {
+    if (!author_name) {
       return NextResponse.json<ApiResponse<never>>(
-        { success: false, error: "author_id and author_name are required" },
+        { success: false, error: "author_name is required" },
         { status: 400 }
       );
     }
 
-    await executeDML(
-      `INSERT INTO AUTHOR (AUTHOR_ID, AUTHOR_NAME, NATIONALITY) VALUES (:1, :2, :3)`,
-      [author_id, author_name, nationality ?? null]
-    );
+    const { ids, reassigned } = await createWithIdRetry({ author_id: "author" }, async (ids) => {
+      await executeDML(
+        `INSERT INTO AUTHOR (AUTHOR_ID, AUTHOR_NAME, NATIONALITY) VALUES (:1, :2, :3)`,
+        [ids.author_id, author_name, nationality ?? null]
+      );
+    });
 
-    return NextResponse.json<ApiResponse<never>>(
-      { success: true, message: "Author created" },
+    return NextResponse.json<ApiResponse<{ author_id: string; reassigned: boolean }>>(
+      { success: true, message: "Author created", data: { author_id: ids.author_id, reassigned } },
       { status: 201 }
     );
   } catch (err) {

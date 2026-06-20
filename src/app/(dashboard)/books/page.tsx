@@ -6,6 +6,7 @@ import PageShell from "@/components/PageShell";
 import DataTable, { Column } from "@/components/DataTable";
 import TableControls from "@/components/TableControls";
 import Modal from "@/components/Modal";
+import Notice from "@/components/Notice";
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass, dangerLinkClass, editLinkClass } from "@/components/FormField";
 import { useTableControls } from "@/lib/useTableControls";
 import type { Author, BookDetail, CategoryDetail } from "@/types";
@@ -55,6 +56,7 @@ export default function BooksPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const { query, setQuery, page, setPage, totalPages, pageRows, totalCount } = useTableControls(
     rows,
@@ -132,9 +134,8 @@ export default function BooksPage() {
     setSubmitting(true);
     setFormError(null);
     try {
-      let result;
       if (modalMode === "create") {
-        result = await apiSend("/api/books", "POST", {
+        const result = await apiSend<{ book_id: string; reassigned: boolean }>("/api/books", "POST", {
           book_id: form.book_id,
           category_id: form.category_id,
           title: form.title,
@@ -145,8 +146,14 @@ export default function BooksPage() {
           available_copies: Number(form.available_copies),
           author_ids: form.author_ids,
         });
+        if (!result.success) {
+          throw new Error(result.error ?? "Request failed");
+        }
+        if (result.data?.reassigned) {
+          setNotice(`Book ID was reassigned to ${result.data.book_id} (the suggested ID was taken in the meantime).`);
+        }
       } else {
-        result = await apiSend(`/api/books/${form.book_id}`, "PUT", {
+        const result = await apiSend(`/api/books/${form.book_id}`, "PUT", {
           category_id: form.category_id,
           title: form.title,
           isbn: form.isbn,
@@ -155,10 +162,9 @@ export default function BooksPage() {
           total_copies: Number(form.total_copies),
           available_copies: Number(form.available_copies),
         });
-      }
-
-      if (!result.success) {
-        throw new Error(result.error ?? "Request failed");
+        if (!result.success) {
+          throw new Error(result.error ?? "Request failed");
+        }
       }
 
       setModalMode(null);
@@ -208,6 +214,7 @@ export default function BooksPage() {
 
   return (
     <PageShell title="Books" description="Book catalogue with availability" loading={loading} error={error}>
+      {notice && <Notice message={notice} onDismiss={() => setNotice(null)} />}
       <div className="mb-4">
         <button className={primaryButtonClass} onClick={openCreate}>
           + Add Book

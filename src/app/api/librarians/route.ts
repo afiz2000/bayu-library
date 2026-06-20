@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeQuery, executeTransaction } from "@/lib/db";
 import { toFriendlyMessage } from "@/lib/errors";
+import { createWithIdRetry } from "@/lib/retryCreate";
 import type { ApiResponse, CreateLibrarianPayload, LibrarianDetail } from "@/types";
 
 // GET /api/librarians — list all librarians with PERSON details
@@ -26,30 +27,39 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body: CreateLibrarianPayload = await request.json();
-    const { person_id, full_name, email, phone, address, gender, librarian_id, staff_id, position } = body;
+    const { full_name, email, phone, address, gender, staff_id, position } = body;
 
-    if (!person_id || !full_name || !email || !gender || !librarian_id || !staff_id || !position) {
+    if (!full_name || !email || !gender || !staff_id || !position) {
       return NextResponse.json<ApiResponse<never>>(
         { success: false, error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    await executeTransaction(async (conn) => {
-      await conn.execute(
-        `INSERT INTO PERSON (PERSON_ID, FULL_NAME, EMAIL, PHONE, ADDRESS, GENDER, PERSON_TYPE)
-         VALUES (:1, :2, :3, :4, :5, :6, 'LIBRARIAN')`,
-        [person_id, full_name, email, phone ?? null, address ?? null, gender]
-      );
-      await conn.execute(
-        `INSERT INTO LIBRARIAN (LIBRARIAN_ID, PERSON_ID, STAFF_ID, POSITION)
-         VALUES (:1, :2, :3, :4)`,
-        [librarian_id, person_id, staff_id, position]
-      );
-    });
+    const { ids, reassigned } = await createWithIdRetry(
+      { person_id: "person", librarian_id: "librarian" },
+      async (ids) => {
+        await executeTransaction(async (conn) => {
+          await conn.execute(
+            `INSERT INTO PERSON (PERSON_ID, FULL_NAME, EMAIL, PHONE, ADDRESS, GENDER, PERSON_TYPE)
+             VALUES (:1, :2, :3, :4, :5, :6, 'LIBRARIAN')`,
+            [ids.person_id, full_name, email, phone ?? null, address ?? null, gender]
+          );
+          await conn.execute(
+            `INSERT INTO LIBRARIAN (LIBRARIAN_ID, PERSON_ID, STAFF_ID, POSITION)
+             VALUES (:1, :2, :3, :4)`,
+            [ids.librarian_id, ids.person_id, staff_id, position]
+          );
+        });
+      }
+    );
 
-    return NextResponse.json<ApiResponse<never>>(
-      { success: true, message: "Librarian created" },
+    return NextResponse.json<ApiResponse<{ person_id: string; librarian_id: string; reassigned: boolean }>>(
+      {
+        success: true,
+        message: "Librarian created",
+        data: { person_id: ids.person_id, librarian_id: ids.librarian_id, reassigned },
+      },
       { status: 201 }
     );
   } catch (err) {

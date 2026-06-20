@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeQuery, executeTransaction } from "@/lib/db";
 import { toFriendlyMessage } from "@/lib/errors";
+import { createWithIdRetry } from "@/lib/retryCreate";
 import type { ApiResponse, BookDetail, CreateBookPayload } from "@/types";
 
 // GET /api/books — list all books with category name and authors
@@ -33,42 +34,34 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body: CreateBookPayload = await request.json();
-    const {
-      book_id,
-      category_id,
-      title,
-      isbn,
-      publish_year,
-      publisher,
-      total_copies,
-      available_copies,
-      author_ids,
-    } = body;
+    const { category_id, title, isbn, publish_year, publisher, total_copies, available_copies, author_ids } = body;
 
-    if (!book_id || !category_id || !title || !isbn || !publish_year || total_copies == null || available_copies == null) {
+    if (!category_id || !title || !isbn || !publish_year || total_copies == null || available_copies == null) {
       return NextResponse.json<ApiResponse<never>>(
         { success: false, error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    await executeTransaction(async (conn) => {
-      await conn.execute(
-        `INSERT INTO BOOK (BOOK_ID, CATEGORY_ID, TITLE, ISBN, PUBLISH_YEAR, PUBLISHER, TOTAL_COPIES, AVAILABLE_COPIES)
-         VALUES (:1, :2, :3, :4, :5, :6, :7, :8)`,
-        [book_id, category_id, title, isbn, publish_year, publisher ?? null, total_copies, available_copies]
-      );
-
-      for (const authorId of author_ids ?? []) {
+    const { ids, reassigned } = await createWithIdRetry({ book_id: "book" }, async (ids) => {
+      await executeTransaction(async (conn) => {
         await conn.execute(
-          `INSERT INTO BOOK_AUTHOR (BOOK_ID, AUTHOR_ID) VALUES (:1, :2)`,
-          [book_id, authorId]
+          `INSERT INTO BOOK (BOOK_ID, CATEGORY_ID, TITLE, ISBN, PUBLISH_YEAR, PUBLISHER, TOTAL_COPIES, AVAILABLE_COPIES)
+           VALUES (:1, :2, :3, :4, :5, :6, :7, :8)`,
+          [ids.book_id, category_id, title, isbn, publish_year, publisher ?? null, total_copies, available_copies]
         );
-      }
+
+        for (const authorId of author_ids ?? []) {
+          await conn.execute(
+            `INSERT INTO BOOK_AUTHOR (BOOK_ID, AUTHOR_ID) VALUES (:1, :2)`,
+            [ids.book_id, authorId]
+          );
+        }
+      });
     });
 
-    return NextResponse.json<ApiResponse<never>>(
-      { success: true, message: "Book created" },
+    return NextResponse.json<ApiResponse<{ book_id: string; reassigned: boolean }>>(
+      { success: true, message: "Book created", data: { book_id: ids.book_id, reassigned } },
       { status: 201 }
     );
   } catch (err) {

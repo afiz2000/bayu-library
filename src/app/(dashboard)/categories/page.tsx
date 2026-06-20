@@ -63,10 +63,15 @@ export default function CategoriesPage() {
     setRows(data);
   }
 
-  function openCreate() {
-    setForm(emptyForm);
+  async function openCreate() {
     setFormError(null);
-    setModalMode("create");
+    try {
+      const { id } = await apiGet<{ id: string }>("/api/next-id/category");
+      setForm({ ...emptyForm, category_id: id });
+      setModalMode("create");
+    } catch (err) {
+      setError((err as Error).message);
+    }
   }
 
   function openEdit(row: CategoryDetail) {
@@ -161,13 +166,7 @@ export default function CategoriesPage() {
         <Modal title={modalMode === "create" ? "Add Category" : "Edit Category"} onClose={() => setModalMode(null)}>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Field label="Category ID">
-              <input
-                className={inputClass}
-                value={form.category_id}
-                onChange={(e) => setForm({ ...form, category_id: e.target.value })}
-                disabled={modalMode === "edit"}
-                required
-              />
+              <input className={inputClass} value={form.category_id} disabled required />
             </Field>
             <Field label="Category Name">
               <input

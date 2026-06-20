@@ -116,10 +116,15 @@ export default function BorrowingsPage() {
 
   const selectedMember = members.find((m) => m.MEMBER_ID === form.member_id);
 
-  function openCreate() {
-    setForm({ ...emptyForm, borrow_date: todayIso(), due_date: defaultDueDate() });
+  async function openCreate() {
     setFormError(null);
-    setModalOpen(true);
+    try {
+      const { id } = await apiGet<{ id: string }>("/api/next-id/borrowing");
+      setForm({ ...emptyForm, borrow_id: id, borrow_date: todayIso(), due_date: defaultDueDate() });
+      setModalOpen(true);
+    } catch (err) {
+      setError((err as Error).message);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -229,12 +234,7 @@ export default function BorrowingsPage() {
         <Modal title="New Borrowing" onClose={() => setModalOpen(false)}>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Field label="Borrow ID">
-              <input
-                className={inputClass}
-                value={form.borrow_id}
-                onChange={(e) => setForm({ ...form, borrow_id: e.target.value })}
-                required
-              />
+              <input className={inputClass} value={form.borrow_id} disabled required />
             </Field>
             <Field label="Member">
               <select

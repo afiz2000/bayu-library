@@ -104,10 +104,18 @@ export default function MembersPage() {
     setRows(data);
   }
 
-  function openCreate() {
-    setForm(emptyForm);
+  async function openCreate() {
     setFormError(null);
-    setModalMode("create");
+    try {
+      const [{ id: personId }, { id: memberId }] = await Promise.all([
+        apiGet<{ id: string }>("/api/next-id/person"),
+        apiGet<{ id: string }>("/api/next-id/member"),
+      ]);
+      setForm({ ...emptyForm, person_id: personId, member_id: memberId });
+      setModalMode("create");
+    } catch (err) {
+      setError((err as Error).message);
+    }
   }
 
   function openEdit(row: MemberDetail) {
@@ -224,12 +232,7 @@ export default function MembersPage() {
             {modalMode === "create" && (
               <>
                 <Field label="Person ID">
-                  <input
-                    className={inputClass}
-                    value={form.person_id}
-                    onChange={(e) => setForm({ ...form, person_id: e.target.value })}
-                    required
-                  />
+                  <input className={inputClass} value={form.person_id} disabled required />
                 </Field>
                 <Field label="Gender">
                   <select
@@ -242,12 +245,7 @@ export default function MembersPage() {
                   </select>
                 </Field>
                 <Field label="Member ID">
-                  <input
-                    className={inputClass}
-                    value={form.member_id}
-                    onChange={(e) => setForm({ ...form, member_id: e.target.value })}
-                    required
-                  />
+                  <input className={inputClass} value={form.member_id} disabled required />
                 </Field>
                 <Field label="Membership Date">
                   <input

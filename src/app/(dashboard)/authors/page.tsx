@@ -63,10 +63,15 @@ export default function AuthorsPage() {
     setRows(data);
   }
 
-  function openCreate() {
-    setForm(emptyForm);
+  async function openCreate() {
     setFormError(null);
-    setModalMode("create");
+    try {
+      const { id } = await apiGet<{ id: string }>("/api/next-id/author");
+      setForm({ ...emptyForm, author_id: id });
+      setModalMode("create");
+    } catch (err) {
+      setError((err as Error).message);
+    }
   }
 
   function openEdit(row: Author) {
@@ -161,13 +166,7 @@ export default function AuthorsPage() {
         <Modal title={modalMode === "create" ? "Add Author" : "Edit Author"} onClose={() => setModalMode(null)}>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Field label="Author ID">
-              <input
-                className={inputClass}
-                value={form.author_id}
-                onChange={(e) => setForm({ ...form, author_id: e.target.value })}
-                disabled={modalMode === "edit"}
-                required
-              />
+              <input className={inputClass} value={form.author_id} disabled required />
             </Field>
             <Field label="Author Name">
               <input

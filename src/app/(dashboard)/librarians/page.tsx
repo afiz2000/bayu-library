@@ -81,10 +81,18 @@ export default function LibrariansPage() {
     setRows(data);
   }
 
-  function openCreate() {
-    setForm(emptyForm);
+  async function openCreate() {
     setFormError(null);
-    setModalMode("create");
+    try {
+      const [{ id: personId }, { id: librarianId }] = await Promise.all([
+        apiGet<{ id: string }>("/api/next-id/person"),
+        apiGet<{ id: string }>("/api/next-id/librarian"),
+      ]);
+      setForm({ ...emptyForm, person_id: personId, librarian_id: librarianId });
+      setModalMode("create");
+    } catch (err) {
+      setError((err as Error).message);
+    }
   }
 
   function openEdit(row: LibrarianDetail) {
@@ -203,12 +211,7 @@ export default function LibrariansPage() {
             {modalMode === "create" && (
               <>
                 <Field label="Person ID">
-                  <input
-                    className={inputClass}
-                    value={form.person_id}
-                    onChange={(e) => setForm({ ...form, person_id: e.target.value })}
-                    required
-                  />
+                  <input className={inputClass} value={form.person_id} disabled required />
                 </Field>
                 <Field label="Gender">
                   <select
@@ -221,12 +224,7 @@ export default function LibrariansPage() {
                   </select>
                 </Field>
                 <Field label="Librarian ID">
-                  <input
-                    className={inputClass}
-                    value={form.librarian_id}
-                    onChange={(e) => setForm({ ...form, librarian_id: e.target.value })}
-                    required
-                  />
+                  <input className={inputClass} value={form.librarian_id} disabled required />
                 </Field>
               </>
             )}

@@ -91,10 +91,15 @@ export default function BooksPage() {
     setRows(data);
   }
 
-  function openCreate() {
-    setForm(emptyForm);
+  async function openCreate() {
     setFormError(null);
-    setModalMode("create");
+    try {
+      const { id } = await apiGet<{ id: string }>("/api/next-id/book");
+      setForm({ ...emptyForm, book_id: id });
+      setModalMode("create");
+    } catch (err) {
+      setError((err as Error).message);
+    }
   }
 
   function openEdit(row: BookDetail) {
@@ -224,12 +229,7 @@ export default function BooksPage() {
           <form onSubmit={handleSubmit} className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-1">
             {modalMode === "create" && (
               <Field label="Book ID">
-                <input
-                  className={inputClass}
-                  value={form.book_id}
-                  onChange={(e) => setForm({ ...form, book_id: e.target.value })}
-                  required
-                />
+                <input className={inputClass} value={form.book_id} disabled required />
               </Field>
             )}
 

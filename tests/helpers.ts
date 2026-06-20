@@ -24,3 +24,7 @@ export function makeRequest(
 export function ctx(id: string) {
   return { params: Promise.resolve({ id }) };
 }
+
+export function ctxWith<T extends Record<string, string>>(params: T) {
+  return { params: Promise.resolve(params) };
+}

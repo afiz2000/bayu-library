@@ -1,0 +1,39 @@
+name: bayu-library
+
+services:
+  app:
+    container_name: bayu-library-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DB_USER: ${DB_USER:-bayu_library}
+      DB_PASSWORD: ${DB_PASSWORD:-Bayu@2026}
+      DB_CONNECTION_STRING: ${DB_CONNECTION_STRING:-db/FREEPDB1}
+      NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Bayu Library Management System}
+      SESSION_SECRET: ${SESSION_SECRET:-dev-only-change-me}
+      DEMO_LIBRARIAN_PASSWORD: ${DEMO_LIBRARIAN_PASSWORD:-demo123}
+      DEMO_MEMBER_PASSWORD: ${DEMO_MEMBER_PASSWORD:-demo123}
+    volumes:
+      - .:/app
+      - bayu-library-node-modules:/app/node_modules
+    depends_on:
+      - db
+    command: npm run dev -- --hostname 0.0.0.0 --port 3000
+
+  db:
+    container_name: bayu-library-db
+    image: gvenzl/oracle-free:23-slim
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:-OracleSysPass123}
+    volumes:
+      - bayu-library-oracle-data:/opt/oracle/oradata
+      - ./sql/bayu_library_FULL.sql:/container-entrypoint-initdb.d/01-bayu_library_FULL.sql:ro
+
+volumes:
+  bayu-library-node-modules:
+  bayu-library-oracle-data:

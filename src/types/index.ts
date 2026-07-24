@@ -129,6 +129,19 @@ export interface BorrowingDetail extends Borrowing {
   LIBRARIAN_NAME: string;
 }
 
+// Row from vw_book_popularity (see sql/bayu_library_FULL.sql)
+export interface BookPopularity {
+  BOOK_ID: string;
+  TITLE: string;
+  TIMES_BORROWED: number;
+}
+
+// Borrowing count grouped by the borrowed book's category
+export interface CategoryBorrowingCount {
+  CATEGORY_NAME: string;
+  BORROW_COUNT: number;
+}
+
 // ============================================================
 // API Response Wrapper
 // ============================================================

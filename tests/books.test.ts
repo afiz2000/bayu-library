@@ -25,7 +25,7 @@ describe("books API", () => {
     const getRes = await getBook(makeRequest("GET", `/api/books/${id}`), ctx(id));
     const getBody = await getRes.json();
     expect(getBody.data.CATEGORY_NAME).toBe("Science");
-    expect(getBody.data.AUTHORS).toContain("Hamka");
+    expect(getBody.data.AUTHORS).toContain("Arbaeyah Yahya");
 
     await deleteBook(makeRequest("DELETE", `/api/books/${id}`, undefined, managementCookie()), ctx(id));
   });

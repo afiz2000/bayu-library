@@ -90,11 +90,12 @@ export default function LibrariansPage() {
   async function openCreate() {
     setFormError(null);
     try {
-      const [{ id: personId }, { id: librarianId }] = await Promise.all([
+      const [{ id: personId }, { id: librarianId }, { id: staffId }] = await Promise.all([
         apiGet<{ id: string }>("/api/next-id/person"),
         apiGet<{ id: string }>("/api/next-id/librarian"),
+        apiGet<{ id: string }>("/api/next-id/staff"),
       ]);
-      setForm({ ...emptyForm, person_id: personId, librarian_id: librarianId });
+      setForm({ ...emptyForm, person_id: personId, librarian_id: librarianId, staff_id: staffId });
       setModalMode("create");
     } catch (err) {
       setError((err as Error).message);
@@ -143,7 +144,7 @@ export default function LibrariansPage() {
         }
         if (result.data?.reassigned) {
           setNotice(
-            `Librarian ID was reassigned to ${result.data.librarian_id} (Person ID ${result.data.person_id}) — the suggested ID was taken in the meantime.`
+            `Librarian ID was reassigned to ${result.data.librarian_id} (Person ID ${result.data.person_id}) — a suggested ID was taken in the meantime.`
           );
         }
       } else {
@@ -296,6 +297,7 @@ export default function LibrariansPage() {
                 className={inputClass}
                 value={form.staff_id}
                 onChange={(e) => setForm({ ...form, staff_id: e.target.value })}
+                disabled={modalMode === "create"}
                 required
               />
             </Field>

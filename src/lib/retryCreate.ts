@@ -1,12 +1,17 @@
 import { getNextId, type IdEntity } from "@/lib/nextId";
 
 // Only treat it as a retryable ID collision when the violated constraint is a
-// primary key (the master schema names every PK "pk_..."). A duplicate ISBN,
-// email, or staff_id also raises ORA-00001 but retrying with a new generated
-// ID would never fix that — it would just loop until max attempts and hide
-// the real, user-actionable error.
+// primary key (the master schema names every PK "pk_...") or the system-
+// generated staff_id (uq_librarian_staff). A duplicate ISBN or email also
+// raises ORA-00001 but retrying with a new generated ID would never fix
+// that — it would just loop until max attempts and hide the real,
+// user-actionable error.
 export function isUniqueConstraintError(err: unknown): boolean {
-  return err instanceof Error && /ORA-00001/.test(err.message) && /\bPK_/i.test(err.message);
+  return (
+    err instanceof Error &&
+    /ORA-00001/.test(err.message) &&
+    /\bPK_|\bUQ_LIBRARIAN_STAFF\b/i.test(err.message)
+  );
 }
 
 // Generates one or more IDs (e.g. { person_id: "person", member_id: "member" }),

@@ -36,9 +36,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const body: CreateLibrarianPayload = await request.json();
-    const { full_name, email, phone, address, gender, staff_id, position } = body;
+    const { full_name, email, phone, address, gender, position } = body;
 
-    if (!full_name || !email || !gender || !staff_id || !position) {
+    if (!full_name || !email || !gender || !position) {
       return NextResponse.json<ApiResponse<never>>(
         { success: false, error: "Missing required fields" },
         { status: 400 }
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { ids, reassigned } = await createWithIdRetry(
-      { person_id: "person", librarian_id: "librarian" },
+      { person_id: "person", librarian_id: "librarian", staff_id: "staff" },
       async (ids) => {
         await executeTransaction(async (conn) => {
           await conn.execute(
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
           await conn.execute(
             `INSERT INTO LIBRARIAN (LIBRARIAN_ID, PERSON_ID, STAFF_ID, POSITION)
              VALUES (:1, :2, :3, :4)`,
-            [ids.librarian_id, ids.person_id, staff_id, position]
+            [ids.librarian_id, ids.person_id, ids.staff_id, position]
           );
         });
       }

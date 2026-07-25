@@ -10,6 +10,7 @@ import {
   BookOpen,
   ArrowLeftRight,
   Clock,
+  AlertTriangle,
   TrendingUp,
   PieChart,
   type LucideIcon,
@@ -47,6 +48,8 @@ interface Stats {
   books: number;
   borrowings: number;
   activeBorrowings: number;
+  overdueBorrowings: number;
+  overdueFineTotal: number;
 }
 
 export default function Home() {
@@ -73,6 +76,10 @@ export default function Home() {
           books: books.length,
           borrowings: borrowings.length,
           activeBorrowings: borrowings.filter((b) => b.STATUS !== "RETURNED").length,
+          overdueBorrowings: borrowings.filter((b) => b.STATUS === "OVERDUE").length,
+          overdueFineTotal: borrowings
+            .filter((b) => b.STATUS === "OVERDUE")
+            .reduce((sum, b) => sum + b.FINE_AMOUNT, 0),
         });
       })
       .catch((err) => setError((err as Error).message));
@@ -100,7 +107,7 @@ export default function Home() {
       )}
 
       <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-        {!stats && !error && Array.from({ length: 7 }).map((_, i) => <StatCardSkeleton key={i} />)}
+        {!stats && !error && Array.from({ length: 8 }).map((_, i) => <StatCardSkeleton key={i} />)}
 
         {stats && (
           <>
@@ -111,6 +118,13 @@ export default function Home() {
             <StatCard href="/books" label="Books" value={stats.books} icon={BookOpen} />
             <StatCard href="/borrowings" label="Total Borrowings" value={stats.borrowings} icon={ArrowLeftRight} />
             <StatCard href="/borrowings" label="Active Borrowings" value={stats.activeBorrowings} icon={Clock} />
+            <StatCard
+              href="/borrowings"
+              label="Total Overdue Borrowing"
+              value={stats.overdueBorrowings}
+              sublabel={`RM ${stats.overdueFineTotal.toFixed(2)} owed`}
+              icon={AlertTriangle}
+            />
           </>
         )}
       </div>
@@ -268,11 +282,13 @@ function StatCard({
   href,
   label,
   value,
+  sublabel,
   icon: Icon,
 }: {
   href: string;
   label: string;
   value: number;
+  sublabel?: string;
   icon: LucideIcon;
 }) {
   return (
@@ -285,6 +301,7 @@ function StatCard({
         <Icon className="h-4 w-4 text-gold-dark transition-transform duration-200 group-hover:scale-110" strokeWidth={2} />
       </div>
       <p className="mt-2 text-3xl font-semibold text-navy">{value}</p>
+      {sublabel && <p className="mt-0.5 text-xs text-navy/50">{sublabel}</p>}
     </Link>
   );
 }

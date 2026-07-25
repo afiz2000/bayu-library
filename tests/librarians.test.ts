@@ -13,7 +13,6 @@ describe("librarians API", () => {
           full_name: "Test Librarian",
           email: "test.librarian@example.com",
           gender: "F",
-          staff_id: "STF-TEST-99",
           position: "Librarian",
         },
         managementCookie()
@@ -27,7 +26,7 @@ describe("librarians API", () => {
 
     const getRes = await getLibrarian(makeRequest("GET", `/api/librarians/${librarianId}`), ctx(librarianId));
     const getBody = await getRes.json();
-    expect(getBody.data.STAFF_ID).toBe("STF-TEST-99");
+    expect(getBody.data.STAFF_ID).toMatch(/^STF-\d{4}-\d+$/);
 
     await updateLibrarian(
       makeRequest("PUT", `/api/librarians/${librarianId}`, { position: "Senior Librarian" }, managementCookie()),
@@ -51,7 +50,7 @@ describe("librarians API", () => {
       makeRequest(
         "POST",
         "/api/librarians",
-        { full_name: "x", email: "blocked@example.com", gender: "M", staff_id: "STF-BLOCK-1", position: "Librarian" },
+        { full_name: "x", email: "blocked@example.com", gender: "M", position: "Librarian" },
         staffCookie()
       )
     );
@@ -62,7 +61,7 @@ describe("librarians API", () => {
       makeRequest(
         "POST",
         "/api/librarians",
-        { full_name: "Setup", email: "setup.permtest@example.com", gender: "M", staff_id: "STF-SETUP-1", position: "Librarian" },
+        { full_name: "Setup", email: "setup.permtest@example.com", gender: "M", position: "Librarian" },
         managementCookie()
       )
     );
